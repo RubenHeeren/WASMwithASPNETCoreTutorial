@@ -1,0 +1,55 @@
+﻿<div class="modal fade show d-block bg-half-black" aria-labelledby="staticBackdropLabel">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Delete post</h5>
+                <button @onclick="() => OnClickButtonClose.InvokeAsync(false)" type="button" class="btn-close" aria-label="Close"></button>
+            </div>
+
+            @if (PostToDelete != null)
+            {
+                <div class="modal-body">
+                    <h1>Are you sure you want to delete post "@PostToDelete.Title"?</h1>
+                </div>
+
+                <div class="modal-footer">
+                    <button @onclick="() => OnClickButtonClose.InvokeAsync(false)" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button @onclick="DeletePostAsync" type="button" class="btn btn-danger">Confirm</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<bool> OnClickButtonClose { get; set; }
+
+    [Parameter]
+    public Post? PostToDelete { get; set; } = null;
+
+#pragma warning disable CS8618
+    [Inject]
+    protected HttpClient HttpClient { get; set; }
+
+    [Inject]
+    protected IJSRuntime JsRuntime { get; set; }
+#pragma warning restore CS8618
+
+    private async Task DeletePostAsync()
+    {
+        Console.WriteLine($"DeletePostAsync | title: {PostToDelete.Title} | content: {PostToDelete.Content}");
+
+        HttpResponseMessage response = await HttpClient.DeleteAsync(APIEndpoints.PostsDelete(PostToDelete.PostId));
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Post delete successful.");
+            OnClickButtonClose.InvokeAsync(true);
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "Post delete failed");
+        }
+    }
+}
